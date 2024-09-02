@@ -31,7 +31,9 @@ jobs:
         run: ./gradlew bundleRelease
           
       - name: Build APK
-        run: ./gradlew assembleRelease
+        run: |
+          ./gradlew assembleRelease
+          ls -l --recursive app
 
 #      - name: Create new release
 #        id: create_release
