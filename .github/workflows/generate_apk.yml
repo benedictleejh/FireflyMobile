@@ -32,63 +32,19 @@ jobs:
           
       - name: Build APK
         run: ./gradlew assembleRelease
-          
-      - name: Sign Release APK
-        id: sign
-        uses: r0adkll/sign-android-release@v1
-        with:
-          releaseDirectory: app/build/outputs/apk/release
-          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
-          alias: ${{ secrets.ALIAS }}
-          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
-          keyPassword: ${{ secrets.KEY_PASSWORD }}
-      
-      - name: Sign Release Bundle
-        id: sign_google_play
-        uses: r0adkll/sign-android-release@v1
-        with:
-          releaseDirectory: app/build/outputs/bundle/release
-          signingKeyBase64: ${{ secrets.GOOGLE_PLAY_UPLOAD_KEY }}
-          alias: ${{ secrets.GOOGLE_PLAY_ALIAS }}
-          keyStorePassword: ${{ secrets.GOOGLE_PLAY_STORE_PASSWORD }}
-          keyPassword: ${{ secrets.GOOGLE_PLAY_STORE_PASSWORD }}
 
-      - name: Create new release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-            GITHUB_TOKEN: ${{ secrets.TOKEN }}
-        with:
-         tag_name: ${{ env.VERSION_NAME }}
-         release_name: ${{ env.VERSION_NAME }}
-         body_path: whatsnew/whatsnew-en_github.txt
-         draft: false
-         prerelease: false
+#      - name: Create new release
+#        id: create_release
+#        uses: actions/create-release@v1
+#        env:
+#            GITHUB_TOKEN: ${{ secrets.TOKEN }}
+#        with:
+#         tag_name: ${{ env.VERSION_NAME }}
+#         release_name: ${{ env.VERSION_NAME }}
+#         body_path: whatsnew/whatsnew-en_github.txt
+#         draft: false
+#         prerelease: false
 
       - name: Rename APK
         run: |
           mv app/build/outputs/apk/release/app-release-unsigned-signed.apk app/build/outputs/apk/release/${{ env.VERSION_NAME }}-firefly.apk
-          
-      - name: Set up SDK   
-        uses: google-github-actions/setup-gcloud@master
-        with:
-          project_id: ${{ secrets.PROJECT_ID }}
-          service_account_key: ${{ secrets.SERVICE_ACCOUNT_KEY }}
-          export_default_credentials: true
-          
-      - name: Upload APK 
-        run: gsutil cp app/build/outputs/apk/release/${{ env.VERSION_NAME }}-firefly.apk gs://${{ secrets.PROJECT_ID }}.appspot.com/firefly
-      
-      - name: Create service_account.json FROM secrets.SERVICE_ACCOUNT_JSON
-        run: echo '${{ secrets.SERVICE_ACCOUNT_JSON }}' > service_account.json
-    
-      - name: Release on Google Play(Don't use 1.0! in userFraction, it does not work)
-        uses: r0adkll/upload-google-play@v1.0.15
-        with:
-          serviceAccountJson: service_account.json
-          packageName: xyz.hisname.fireflyiii
-          releaseFiles: ${{steps.sign_google_play.outputs.signedReleaseFile}}
-          track: production
-          inAppUpdatePriority: 5
-          userFraction: 0.9
-          whatsNewDirectory: whatsnew
